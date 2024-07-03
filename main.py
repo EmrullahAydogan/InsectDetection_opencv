@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 
 def preprocess_image(image):
     # Gri tonlamaya çevir
@@ -33,24 +32,40 @@ def draw_contours(original_image, contours):
             cv2.rectangle(original_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
     return original_image
 
-# Resmi yükle
-image_path = 'bugs7.jpg'
-image = cv2.imread(image_path)
+# Video dosyasını veya kamera beslemesini aç
+video_path = 'bugs1.mp4'
+cap = cv2.VideoCapture(video_path)
 
-# Ön işleme
-preprocessed_image = preprocess_image(image)
+# Video yazıcı ayarları
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output.avi', fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
 
-# Segmentasyon
-segmented_image = segment_image(preprocessed_image)
+while(cap.isOpened()):
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-# Konturları bul
-contours = find_contours(segmented_image)
+    # Ön işleme
+    preprocessed_image = preprocess_image(frame)
 
-# Konturları çiz
-output_image = draw_contours(image.copy(), contours)
+    # Segmentasyon
+    segmented_image = segment_image(preprocessed_image)
 
-# Sonuçları görselleştir
-plt.figure(figsize=(10, 10))
-plt.imshow(cv2.cvtColor(output_image, cv2.COLOR_BGR2RGB))
-plt.title('Detected Cockroaches')
-plt.show()
+    # Konturları bul
+    contours = find_contours(segmented_image)
+
+    # Konturları çiz
+    output_frame = draw_contours(frame.copy(), contours)
+
+    # İşlenmiş kareyi kaydet
+    out.write(output_frame)
+
+    # Sonuçları göstermek için kareyi göster
+    cv2.imshow('Detected Cockroaches', output_frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Kaynakları serbest bırak
+cap.release()
+out.release()
+cv2.destroyAllWindows()
