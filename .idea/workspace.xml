@@ -4,16 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f375412-3539-49aa-b677-652a658806f6" name="Changes" comment="ready to insect detection (for video)">
+    <list default="true" id="6f375412-3539-49aa-b677-652a658806f6" name="Changes" comment="ready to cockroaches detection (for video)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocekler.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocekler2.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocekler3.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocekvideo.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocekvideo2.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocekvideo3.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocekvideo4.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -130,7 +122,23 @@
       <option name="project" value="LOCAL" />
       <updated>1719687289384</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="ready to cockroaches detection (for image)">
+      <option name="closed" value="true" />
+      <created>1720034735204</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1720034735204</updated>
+    </task>
+    <task id="LOCAL-00006" summary="ready to cockroaches detection (for video)">
+      <option name="closed" value="true" />
+      <created>1720034934463</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1720034934463</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -147,6 +155,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="ready to insect detection" />
     <MESSAGE value="ready to insect detection (for video)" />
-    <option name="LAST_COMMIT_MESSAGE" value="ready to insect detection (for video)" />
+    <MESSAGE value="ready to cockroaches detection (for image)" />
+    <MESSAGE value="ready to cockroaches detection (for video)" />
+    <option name="LAST_COMMIT_MESSAGE" value="ready to cockroaches detection (for video)" />
   </component>
 </project>

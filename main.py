@@ -1,71 +1,143 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import time
+from collections import deque
+import pandas as pd
 
-def preprocess_image(image):
-    # Gri tonlamaya çevir
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # Gaussian bulanıklaştırma uygulayın
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    return blurred
+def kimyasal_merkezini_isaretle(frame):
+    """Kullanıcının kimyasalın merkezini fare tıklamasıyla seçmesini sağlar."""
+    kimyasal_merkez = None
 
-def segment_image(image):
-    # Adaptif eşikleme uygulayın
-    thresh = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                   cv2.THRESH_BINARY_INV, 11, 2)
-    # Morfolojik işlemler: Açma (erozyon + genişleme)
-    kernel = np.ones((3, 3), np.uint8)
-    opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=2)
-    # Büyük alanları kapatmak için genişletme
-    sure_bg = cv2.dilate(opening, kernel, iterations=3)
-    return sure_bg
+    def fare_tiklama(event, x, y, flags, param):
+        nonlocal kimyasal_merkez
+        if event == cv2.EVENT_LBUTTONDOWN:
+            kimyasal_merkez = (x, y)
 
-def find_contours(image):
-    # Konturları bulun
-    contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    return contours
+    cv2.namedWindow('Kimyasal Merkezini İşaretle')
+    cv2.setMouseCallback('Kimyasal Merkezini İşaretle', fare_tiklama)
+    cv2.imshow('Kimyasal Merkezini İşaretle', frame)
 
-def draw_contours(original_image, contours):
-    # Konturları çiz
-    for contour in contours:
-        if cv2.contourArea(contour) > 100:  # Çok küçük konturları filtrele
-            x, y, w, h = cv2.boundingRect(contour)
-            cv2.rectangle(original_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    return original_image
+    while kimyasal_merkez is None:
+        if cv2.waitKey(1) == ord('q'):  # 'q' tuşuna basarak çıkış
+            break
 
-# Video dosyasını veya kamera beslemesini aç
-video_path = 'bugs1.mp4'
-cap = cv2.VideoCapture(video_path)
+    cv2.destroyWindow('Kimyasal Merkezini İşaretle')
+    return kimyasal_merkez
 
-# Video yazıcı ayarları
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi', fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
+cap = cv2.VideoCapture('bugs1.mp4')
+fgbg = cv2.createBackgroundSubtractorKNN(detectShadows=True)
 
-while(cap.isOpened()):
+# İlk kareyi al ve kimyasal merkezini işaretle
+ret, frame = cap.read()
+kimyasal_merkez = kimyasal_merkezini_isaretle(frame)
+
+# Zaman ve uzaklık verilerini saklamak için listeler
+object_data = {}
+object_tracks = {}
+next_id = 0
+
+start_time = time.time()
+
+# Matplotlib'in interaktif modunu etkinleştir
+plt.ion()
+fig, ax = plt.subplots()
+colors = plt.cm.rainbow(np.linspace(0, 1, 100))  # Maksimum 100 farklı renk
+
+while True:
     ret, frame = cap.read()
     if not ret:
         break
 
-    # Ön işleme
-    preprocessed_image = preprocess_image(frame)
+    fgmask = fgbg.apply(frame)
 
-    # Segmentasyon
-    segmented_image = segment_image(preprocessed_image)
+    # Filtreleme (Daha önceki filtreleme adımlarını da ekleyebilirsiniz)
+    fgmask = cv2.medianBlur(fgmask, 5)
+    fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
 
-    # Konturları bul
-    contours = find_contours(segmented_image)
+    # Alan Filtreleme
+    contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    detected_objects = []
 
-    # Konturları çiz
-    output_frame = draw_contours(frame.copy(), contours)
+    for contour in contours:
+        if cv2.contourArea(contour) < 500:
+            continue  # Küçük alanları atla
 
-    # İşlenmiş kareyi kaydet
-    out.write(output_frame)
+        # Böceklerin merkezini bul
+        M = cv2.moments(contour)
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
 
-    # Sonuçları göstermek için kareyi göster
-    cv2.imshow('Detected Cockroaches', output_frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+            # Uzaklığı hesapla (Öklid uzaklığı)
+            uzaklik = np.sqrt((cX - kimyasal_merkez[0])**2 + (cY - kimyasal_merkez[1])**2)
+
+            detected_objects.append((cX, cY, uzaklik))
+
+    # Nesne eşleme ve kimliklendirme
+    for (cX, cY, uzaklik) in detected_objects:
+        object_id = next_id
+        next_id += 1
+        for oid, data in object_data.items():
+            if np.sqrt((data[-1][1] - cX)**2 + (data[-1][2] - cY)**2) < 50:
+                object_id = oid
+                break
+
+        if object_id not in object_data:
+            object_data[object_id] = []
+            object_tracks[object_id] = deque(maxlen=20)
+
+        current_time = time.time() - start_time
+        object_data[object_id].append((current_time, cX, cY, uzaklik))
+        object_tracks[object_id].append((cX, cY))
+
+        # Dikdörtgen içine alma ve uzaklığı yazdırma
+        (x, y, w, h) = cv2.boundingRect(np.array([[cX, cY]]))
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(frame, f"{uzaklik:.2f}", (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(frame, f"ID: {object_id}", (cX, cY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+        # İz yollarını çizme
+        for i in range(1, len(object_tracks[object_id])):
+            if object_tracks[object_id][i - 1] is None or object_tracks[object_id][i] is None:
+                continue
+            cv2.line(frame, object_tracks[object_id][i - 1], object_tracks[object_id][i], colors[object_id % 100], 2)
+
+    # Kimyasalın yerini işaretle
+    cv2.circle(frame, kimyasal_merkez, 5, (0, 0, 255), -1)
+
+    cv2.imshow('Frame', frame)
+    cv2.imshow('FG Mask', fgmask)
+
+    # Grafiği güncelle
+    ax.clear()
+    for oid, data in object_data.items():
+        times = [d[0] for d in data]
+        distances = [d[3] for d in data]
+        ax.plot(times, distances, marker='o', linestyle='-', color=colors[oid % 100], label=f'ID {oid}')
+    ax.set_title('Böceklerin Kimyasal Merkezine Uzaklığına Göre Zaman Grafiği')
+    ax.set_xlabel('Zaman (saniye)')
+    ax.set_ylabel('Uzaklık (piksel)')
+    ax.legend()
+    ax.grid(True)
+    plt.pause(0.001)
+
+    keyboard = cv2.waitKey(30)
+    if keyboard == 'q' or keyboard == 27:
         break
 
-# Kaynakları serbest bırak
 cap.release()
-out.release()
 cv2.destroyAllWindows()
+
+# Matplotlib'in interaktif modunu kapat
+plt.ioff()
+plt.show()
+
+# Verileri Excel dosyasına kaydet
+all_data = []
+for oid, data in object_data.items():
+    for entry in data:
+        all_data.append([oid, entry[0], entry[1], entry[2], entry[3]])
+
+df = pd.DataFrame(all_data, columns=['Object ID', 'Time (s)', 'X', 'Y', 'Distance'])
+df.to_excel('bocek_izleme_verileri.xlsx', index=False)
