@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import time
 from collections import deque
 import pandas as pd
+from scipy.ndimage import gaussian_filter
 
 def kimyasal_merkezini_isaretle(frame):
     """Kullanıcının kimyasalın merkezini fare tıklamasıyla seçmesini sağlar."""
@@ -14,15 +15,15 @@ def kimyasal_merkezini_isaretle(frame):
         if event == cv2.EVENT_LBUTTONDOWN:
             kimyasal_merkez = (x, y)
 
-    cv2.namedWindow('Kimyasal Merkezini İşaretle')
-    cv2.setMouseCallback('Kimyasal Merkezini İşaretle', fare_tiklama)
-    cv2.imshow('Kimyasal Merkezini İşaretle', frame)
+    cv2.namedWindow('Kimyasal Merkezini Isaretle')
+    cv2.setMouseCallback('Kimyasal Merkezini Isaretle', fare_tiklama)
+    cv2.imshow('Kimyasal Merkezini Isaretle', frame)
 
     while kimyasal_merkez is None:
         if cv2.waitKey(1) == ord('q'):  # 'q' tuşuna basarak çıkış
             break
 
-    cv2.destroyWindow('Kimyasal Merkezini İşaretle')
+    cv2.destroyWindow('Kimyasal Merkezini Isaretle')
     return kimyasal_merkez
 
 cap = cv2.VideoCapture('bugs1.mp4')
@@ -43,6 +44,9 @@ start_time = time.time()
 plt.ion()
 fig, ax = plt.subplots()
 colors = plt.cm.rainbow(np.linspace(0, 1, 100))  # Maksimum 100 farklı renk
+
+# Yoğunluk haritası için
+heatmap = np.zeros_like(frame[:, :, 0]).astype(float)
 
 while True:
     ret, frame = cap.read()
@@ -97,17 +101,30 @@ while True:
         cv2.putText(frame, f"{uzaklik:.2f}", (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         cv2.putText(frame, f"ID: {object_id}", (cX, cY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-        # İz yollarını çizme
-        for i in range(1, len(object_tracks[object_id])):
-            if object_tracks[object_id][i - 1] is None or object_tracks[object_id][i] is None:
-                continue
-            cv2.line(frame, object_tracks[object_id][i - 1], object_tracks[object_id][i], colors[object_id % 100], 2)
-
     # Kimyasalın yerini işaretle
     cv2.circle(frame, kimyasal_merkez, 5, (0, 0, 255), -1)
 
-    cv2.imshow('Frame', frame)
-    cv2.imshow('FG Mask', fgmask)
+    #cv2.imshow('Frame', frame)
+    #cv2.imshow('FG Mask', fgmask)
+
+    # Yoğunluk haritasını güncelle
+    for oid, track in object_tracks.items():
+        for (x, y) in track:
+            heatmap[y, x] += 1
+
+    # Yoğunluk haritasını bulanıklaştır ve normalize et
+    heatmap_blurred = gaussian_filter(heatmap, sigma=10)
+    heatmap_normalized = (heatmap_blurred - heatmap_blurred.min()) / (heatmap_blurred.max() - heatmap_blurred.min())
+
+    # Yoğunluk haritasını renklendir (3 kanallı)
+    heatmap_colored = (plt.cm.jet(heatmap_normalized)[:, :, :3] * 255).astype(np.uint8)
+
+    # Boyutları eşitle
+    heatmap_colored = cv2.resize(heatmap_colored, (frame.shape[1], frame.shape[0]))
+
+    # Yoğunluk haritasını videoya ekle (isteğe bağlı)
+    heatmap_overlay = cv2.addWeighted(frame, 0.7, heatmap_colored, 0.3, 0)
+    cv2.imshow('Yoğunluk Haritası (Video Üzerinde)', heatmap_overlay)
 
     # Grafiği güncelle
     ax.clear()
@@ -122,8 +139,10 @@ while True:
     ax.grid(True)
     plt.pause(0.001)
 
-    keyboard = cv2.waitKey(30)
-    if keyboard == 'q' or keyboard == 27:
+    # Yoğunluk haritasını ayrı pencerede göster
+    #cv2.imshow('Yoğunluk Haritası', heatmap_colored)
+
+    if cv2.waitKey(30) == ord('q'):  # 'q' tuşuna basarak çıkış
         break
 
 cap.release()
@@ -132,6 +151,9 @@ cv2.destroyAllWindows()
 # Matplotlib'in interaktif modunu kapat
 plt.ioff()
 plt.show()
+
+# Yoğunluk haritasını kaydet (isteğe bağlı)
+cv2.imwrite('yogunluk_haritasi.png', heatmap_overlay)
 
 # Verileri Excel dosyasına kaydet
 all_data = []

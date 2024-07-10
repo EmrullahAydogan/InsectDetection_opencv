@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f375412-3539-49aa-b677-652a658806f6" name="Changes" comment="ready to cockroaches detection (for video)">
+    <list default="true" id="6f375412-3539-49aa-b677-652a658806f6" name="Changes" comment="graph plotting ready, excel printing ready (for video)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bocek_izleme_verileri.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/bocek_izleme_verileri.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output.avi" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,6 +42,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/emrul/PycharmProjects/InsectDetection_opencv&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;vcs.Subversion.Network&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -138,7 +142,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720034934463</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="graph plotting ready, excel printing ready (for video)">
+      <option name="closed" value="true" />
+      <created>1720381212225</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1720381212225</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -157,6 +169,7 @@
     <MESSAGE value="ready to insect detection (for video)" />
     <MESSAGE value="ready to cockroaches detection (for image)" />
     <MESSAGE value="ready to cockroaches detection (for video)" />
-    <option name="LAST_COMMIT_MESSAGE" value="ready to cockroaches detection (for video)" />
+    <MESSAGE value="graph plotting ready, excel printing ready (for video)" />
+    <option name="LAST_COMMIT_MESSAGE" value="graph plotting ready, excel printing ready (for video)" />
   </component>
 </project>
