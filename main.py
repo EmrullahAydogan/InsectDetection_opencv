@@ -1,10 +1,12 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
 import time
 from collections import deque
 import pandas as pd
 from scipy.ndimage import gaussian_filter
+import matplotlib
 
 def kimyasal_merkezini_isaretle(frame):
     """Kullanıcının kimyasalın merkezini fare tıklamasıyla seçmesini sağlar."""
@@ -91,7 +93,7 @@ while True:
             object_data[object_id] = []
             object_tracks[object_id] = deque(maxlen=20)
 
-        current_time = time.time() - start_time
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")  # Saat, dakika, saniye formatında zaman
         object_data[object_id].append((current_time, cX, cY, uzaklik))
         object_tracks[object_id].append((cX, cY))
 
@@ -124,19 +126,21 @@ while True:
 
     # Yoğunluk haritasını videoya ekle (isteğe bağlı)
     heatmap_overlay = cv2.addWeighted(frame, 0.7, heatmap_colored, 0.3, 0)
-    cv2.imshow('Yoğunluk Haritası (Video Üzerinde)', heatmap_overlay)
+    cv2.imshow('Yogunluk Haritasi', heatmap_overlay)
 
     # Grafiği güncelle
     ax.clear()
     for oid, data in object_data.items():
-        times = [d[0] for d in data]
+        times = [datetime.datetime.strptime(d[0], "%H:%M:%S") for d in data]
         distances = [d[3] for d in data]
         ax.plot(times, distances, marker='o', linestyle='-', color=colors[oid % 100], label=f'ID {oid}')
     ax.set_title('Böceklerin Kimyasal Merkezine Uzaklığına Göre Zaman Grafiği')
-    ax.set_xlabel('Zaman (saniye)')
+    ax.set_xlabel('Zaman (H:M:S)')
     ax.set_ylabel('Uzaklık (piksel)')
     ax.legend()
     ax.grid(True)
+    ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M:%S'))
+    plt.gcf().autofmt_xdate()
     plt.pause(0.001)
 
     # Yoğunluk haritasını ayrı pencerede göster
@@ -161,5 +165,5 @@ for oid, data in object_data.items():
     for entry in data:
         all_data.append([oid, entry[0], entry[1], entry[2], entry[3]])
 
-df = pd.DataFrame(all_data, columns=['Object ID', 'Time (s)', 'X', 'Y', 'Distance'])
+df = pd.DataFrame(all_data, columns=['Object ID', 'Time (H:M:S)', 'X', 'Y', 'Distance'])
 df.to_excel('bocek_izleme_verileri.xlsx', index=False)

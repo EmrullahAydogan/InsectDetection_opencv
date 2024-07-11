@@ -4,11 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f375412-3539-49aa-b677-652a658806f6" name="Changes" comment="graph plotting ready, excel printing ready (for video)">
+    <list default="true" id="6f375412-3539-49aa-b677-652a658806f6" name="Changes" comment="heatmap ready (for video)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bocek_izleme_verileri.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/bocek_izleme_verileri.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output.avi" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi.png" beforeDir="false" afterPath="$PROJECT_DIR$/yogunluk_haritasi.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +150,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720381212225</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="heatmap ready (for video)">
+      <option name="closed" value="true" />
+      <created>1720642716940</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1720642716940</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -170,6 +178,7 @@
     <MESSAGE value="ready to cockroaches detection (for image)" />
     <MESSAGE value="ready to cockroaches detection (for video)" />
     <MESSAGE value="graph plotting ready, excel printing ready (for video)" />
-    <option name="LAST_COMMIT_MESSAGE" value="graph plotting ready, excel printing ready (for video)" />
+    <MESSAGE value="heatmap ready (for video)" />
+    <option name="LAST_COMMIT_MESSAGE" value="heatmap ready (for video)" />
   </component>
 </project>
