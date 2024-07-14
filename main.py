@@ -7,6 +7,7 @@ from collections import deque
 import pandas as pd
 from scipy.ndimage import gaussian_filter
 import matplotlib
+import os
 
 def kimyasal_merkezini_isaretle(frame):
     """Kullanıcının kimyasalın merkezini fare tıklamasıyla seçmesini sağlar."""
@@ -50,6 +51,17 @@ colors = plt.cm.rainbow(np.linspace(0, 1, 100))  # Maksimum 100 farklı renk
 # Yoğunluk haritası için
 heatmap = np.zeros_like(frame[:, :, 0]).astype(float)
 
+# Kayıt klasörü oluşturma
+kayit_klasoru = 'yogunluk_haritasi_kayitlari'
+os.makedirs(kayit_klasoru, exist_ok=True)
+
+# Zamanlayıcı için değişkenler
+kayit_araligi = 10  # Saniye cinsinden kayıt aralığı
+son_kayit_zamani = time.time()
+
+# Son kayıt zamanlarını takip etmek için bir sözlük
+last_recorded_times = {}
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -92,10 +104,14 @@ while True:
         if object_id not in object_data:
             object_data[object_id] = []
             object_tracks[object_id] = deque(maxlen=20)
+            last_recorded_times[object_id] = None  # Yeni böcek için son kayıt zamanı None olarak başlat
 
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")  # Saat, dakika, saniye formatında zaman
-        object_data[object_id].append((current_time, cX, cY, uzaklik))
-        object_tracks[object_id].append((cX, cY))
+        current_time = datetime.datetime.now()
+        if last_recorded_times[object_id] is None or (current_time - last_recorded_times[object_id]).total_seconds() >= 1:  # Saniyede bir kayıt kontrolü
+            current_time_str = current_time.strftime("%H:%M:%S")
+            object_data[object_id].append((current_time_str, cX, cY, uzaklik))
+            object_tracks[object_id].append((cX, cY))
+            last_recorded_times[object_id] = current_time  # Son kayıt zamanını güncelle
 
         # Dikdörtgen içine alma ve uzaklığı yazdırma
         (x, y, w, h) = cv2.boundingRect(np.array([[cX, cY]]))
@@ -108,6 +124,14 @@ while True:
 
     #cv2.imshow('Frame', frame)
     #cv2.imshow('FG Mask', fgmask)
+
+    # Yoğunluk haritasını kaydetme
+    simdiki_zaman = time.time()
+    if simdiki_zaman - son_kayit_zamani >= kayit_araligi:
+        dosya_adi = os.path.join(kayit_klasoru, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png')
+        cv2.imwrite(dosya_adi, heatmap_colored)
+        son_kayit_zamani = simdiki_zaman
+
 
     # Yoğunluk haritasını güncelle
     for oid, track in object_tracks.items():
@@ -124,9 +148,14 @@ while True:
     # Boyutları eşitle
     heatmap_colored = cv2.resize(heatmap_colored, (frame.shape[1], frame.shape[0]))
 
+    # Kimyasalın yerini heatmap_colored üzerinde işaretle (siyah)
+    cv2.circle(heatmap_colored, kimyasal_merkez, 5, (0, 0, 0), -1)  # Siyah renk (0, 0, 0)
+
     # Yoğunluk haritasını videoya ekle (isteğe bağlı)
     heatmap_overlay = cv2.addWeighted(frame, 0.7, heatmap_colored, 0.3, 0)
     cv2.imshow('Yogunluk Haritasi', heatmap_overlay)
+
+
 
     # Grafiği güncelle
     ax.clear()
@@ -158,6 +187,7 @@ plt.show()
 
 # Yoğunluk haritasını kaydet (isteğe bağlı)
 cv2.imwrite('yogunluk_haritasi.png', heatmap_overlay)
+cv2.imwrite('yogunluk_haritasi2.png', heatmap_colored)
 
 # Verileri Excel dosyasına kaydet
 all_data = []
