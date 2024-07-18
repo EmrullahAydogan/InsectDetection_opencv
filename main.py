@@ -34,6 +34,7 @@ fgbg = cv2.createBackgroundSubtractorKNN(detectShadows=True)
 
 # İlk kareyi al ve kimyasal merkezini işaretle
 ret, frame = cap.read()
+frame = cv2.flip(frame, 1)
 kimyasal_merkez = kimyasal_merkezini_isaretle(frame)
 
 # Zaman ve uzaklık verilerini saklamak için listeler
@@ -53,7 +54,9 @@ heatmap = np.zeros_like(frame[:, :, 0]).astype(float)
 
 # Kayıt klasörü oluşturma
 kayit_klasoru = 'yogunluk_haritasi_kayitlari'
+heatmap_overlay_klasoru = 'heatmap_overlay_kayitlari'
 os.makedirs(kayit_klasoru, exist_ok=True)
+os.makedirs(heatmap_overlay_klasoru, exist_ok=True)
 
 # Zamanlayıcı için değişkenler
 kayit_araligi = 10  # Saniye cinsinden kayıt aralığı
@@ -67,6 +70,7 @@ while True:
     if not ret:
         break
 
+    frame = cv2.flip(frame, 1)
     fgmask = fgbg.apply(frame)
 
     # Filtreleme (Daha önceki filtreleme adımlarını da ekleyebilirsiniz)
@@ -78,7 +82,7 @@ while True:
     detected_objects = []
 
     for contour in contours:
-        if cv2.contourArea(contour) < 500:
+        if cv2.contourArea(contour) < 150:
             continue  # Küçük alanları atla
 
         # Böceklerin merkezini bul
@@ -120,17 +124,11 @@ while True:
         cv2.putText(frame, f"ID: {object_id}", (cX, cY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
     # Kimyasalın yerini işaretle
-    cv2.circle(frame, kimyasal_merkez, 5, (0, 0, 255), -1)
+    cv2.circle(frame, kimyasal_merkez, 5, (0, 0, 0), -1)
 
     #cv2.imshow('Frame', frame)
     #cv2.imshow('FG Mask', fgmask)
 
-    # Yoğunluk haritasını kaydetme
-    simdiki_zaman = time.time()
-    if simdiki_zaman - son_kayit_zamani >= kayit_araligi:
-        dosya_adi = os.path.join(kayit_klasoru, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png')
-        cv2.imwrite(dosya_adi, heatmap_colored)
-        son_kayit_zamani = simdiki_zaman
 
 
     # Yoğunluk haritasını güncelle
@@ -155,7 +153,15 @@ while True:
     heatmap_overlay = cv2.addWeighted(frame, 0.7, heatmap_colored, 0.3, 0)
     cv2.imshow('Yogunluk Haritasi', heatmap_overlay)
 
-
+    # Kayıt zamanını kontrol et
+    simdiki_zaman = time.time()
+    if simdiki_zaman - son_kayit_zamani >= kayit_araligi:
+        # Her iki görüntüyü de aynı anda kaydet
+        dosya_adi_overlay = os.path.join(heatmap_overlay_klasoru, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_heatmap_overlay.png')
+        dosya_adi_colored = os.path.join(kayit_klasoru, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png')
+        cv2.imwrite(dosya_adi_overlay, heatmap_overlay)
+        cv2.imwrite(dosya_adi_colored, heatmap_colored)
+        son_kayit_zamani = simdiki_zaman
 
     # Grafiği güncelle
     ax.clear()
@@ -164,7 +170,7 @@ while True:
         distances = [d[3] for d in data]
         ax.plot(times, distances, marker='o', linestyle='-', color=colors[oid % 100], label=f'ID {oid}')
     ax.set_title('Böceklerin Kimyasal Merkezine Uzaklığına Göre Zaman Grafiği')
-    ax.set_xlabel('Zaman (H:M:S)')
+    ax.set_xlabel('Zaman')
     ax.set_ylabel('Uzaklık (piksel)')
     ax.legend()
     ax.grid(True)
@@ -181,19 +187,26 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
+# Grafiği kaydet
+kayit_zamani = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+grafik_dosya_adi = f'bocek_uzaklik_grafigi_{kayit_zamani}.png'
+plt.savefig(grafik_dosya_adi)
+
 # Matplotlib'in interaktif modunu kapat
 plt.ioff()
 plt.show()
 
-# Yoğunluk haritasını kaydet (isteğe bağlı)
+"""
+# Yoğunluk haritasını kaydet
 cv2.imwrite('yogunluk_haritasi.png', heatmap_overlay)
 cv2.imwrite('yogunluk_haritasi2.png', heatmap_colored)
+"""
 
 # Verileri Excel dosyasına kaydet
 all_data = []
 for oid, data in object_data.items():
     for entry in data:
-        all_data.append([oid, entry[0], entry[1], entry[2], entry[3]])
+        all_data.append([oid, entry[0], entry[3]])  # Sadece ID, zaman ve uzaklık
 
-df = pd.DataFrame(all_data, columns=['Object ID', 'Time (H:M:S)', 'X', 'Y', 'Distance'])
+df = pd.DataFrame(all_data, columns=['Object ID', 'Time', 'Distance'])
 df.to_excel('bocek_izleme_verileri.xlsx', index=False)
