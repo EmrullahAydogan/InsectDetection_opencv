@@ -6,43 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="6f375412-3539-49aa-b677-652a658806f6" name="Changes" comment="heatmap ready (for video)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bocek_izleme_verileri.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/bocek_izleme_verileri.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs1.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs2.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs3.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs4.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs5.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs6.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs7.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs8.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bugs9.jpg" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-44-02.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-44-12.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-44-22.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-44-32.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-44-42.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-44-52.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-45-02.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-45-12.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-56-42.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-56-52.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-57-02.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-57-12.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-57-22.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-57-32.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-57-42.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-57-52.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-58-18.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-58-28.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-58-39.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-58-49.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-58-59.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-59-09.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-59-19.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/yogunluk_haritasi_kayitlari/2024-07-14_15-59-29.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -208,7 +172,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720962664304</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="heatmap ready (for video)">
+      <option name="closed" value="true" />
+      <created>1721335202699</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1721335202699</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

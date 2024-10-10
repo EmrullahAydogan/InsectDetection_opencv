@@ -9,60 +9,61 @@ from scipy.ndimage import gaussian_filter
 import matplotlib
 import os
 
-def kimyasal_merkezini_isaretle(frame):
-    """Kullanıcının kimyasalın merkezini fare tıklamasıyla seçmesini sağlar."""
-    kimyasal_merkez = None
+def mark_chemical_center(frame):
+    """Allows the user to select the center of the chemical by clicking with the mouse."""
+    chemical_center = None
 
-    def fare_tiklama(event, x, y, flags, param):
-        nonlocal kimyasal_merkez
+    def mouse_click(event, x, y, flags, param):
+        nonlocal chemical_center
         if event == cv2.EVENT_LBUTTONDOWN:
-            kimyasal_merkez = (x, y)
+            chemical_center = (x, y)
 
-    cv2.namedWindow('Kimyasal Merkezini Isaretle')
-    cv2.setMouseCallback('Kimyasal Merkezini Isaretle', fare_tiklama)
-    cv2.imshow('Kimyasal Merkezini Isaretle', frame)
+    cv2.namedWindow('Mark Chemical Center')
+    cv2.setMouseCallback('Mark Chemical Center', mouse_click)
+    cv2.imshow('Mark Chemical Center', frame)
 
-    while kimyasal_merkez is None:
-        if cv2.waitKey(1) == ord('q'):  # 'q' tuşuna basarak çıkış
+    while chemical_center is None:
+        if cv2.waitKey(1) == ord('q'):  # Press 'q' to exit
             break
 
-    cv2.destroyWindow('Kimyasal Merkezini Isaretle')
-    return kimyasal_merkez
+    cv2.destroyWindow('Mark Chemical Center')
+    return chemical_center
 
-cap = cv2.VideoCapture('bugs1.mp4')
+cap = cv2.VideoCapture(0)
 fgbg = cv2.createBackgroundSubtractorKNN(detectShadows=True)
 
-# İlk kareyi al ve kimyasal merkezini işaretle
+# Capture the first frame and mark the chemical center
 ret, frame = cap.read()
 frame = cv2.flip(frame, 1)
-kimyasal_merkez = kimyasal_merkezini_isaretle(frame)
+chemical_center = mark_chemical_center(frame)
 
-# Zaman ve uzaklık verilerini saklamak için listeler
+# Lists to store time and distance data
 object_data = {}
 object_tracks = {}
 next_id = 0
 
 start_time = time.time()
+warmup_duration = 1  # 5 seconds warm-up period
 
-# Matplotlib'in interaktif modunu etkinleştir
+# Enable interactive mode for Matplotlib
 plt.ion()
 fig, ax = plt.subplots()
-colors = plt.cm.rainbow(np.linspace(0, 1, 100))  # Maksimum 100 farklı renk
+colors = plt.cm.rainbow(np.linspace(0, 1, 100))  # Maximum of 100 different colors
 
-# Yoğunluk haritası için
+# For the heatmap
 heatmap = np.zeros_like(frame[:, :, 0]).astype(float)
 
-# Kayıt klasörü oluşturma
-kayit_klasoru = 'yogunluk_haritasi_kayitlari'
-heatmap_overlay_klasoru = 'heatmap_overlay_kayitlari'
-os.makedirs(kayit_klasoru, exist_ok=True)
-os.makedirs(heatmap_overlay_klasoru, exist_ok=True)
+# Create folders for recording
+record_folder = 'heatmap_records'
+heatmap_overlay_folder = 'heatmap_overlay_records'
+os.makedirs(record_folder, exist_ok=True)
+os.makedirs(heatmap_overlay_folder, exist_ok=True)
 
-# Zamanlayıcı için değişkenler
-kayit_araligi = 10  # Saniye cinsinden kayıt aralığı
-son_kayit_zamani = time.time()
+# Variables for the timer
+record_interval_with_detection = 3  # Recording interval in seconds when something is detected
+last_record_time = time.time()
 
-# Son kayıt zamanlarını takip etmek için bir sözlük
+# Dictionary to track the last recorded times
 last_recorded_times = {}
 
 while True:
@@ -73,31 +74,40 @@ while True:
     frame = cv2.flip(frame, 1)
     fgmask = fgbg.apply(frame)
 
-    # Filtreleme (Daha önceki filtreleme adımlarını da ekleyebilirsiniz)
+    # Filtering
     fgmask = cv2.medianBlur(fgmask, 5)
     fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
 
-    # Alan Filtreleme
+    # Skip detection during the warm-up period
+    elapsed_time = time.time() - start_time
+    if elapsed_time < warmup_duration:
+        #cv2.putText(frame, "Warming up...", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        cv2.imshow('Heatmap', frame)
+        if cv2.waitKey(30) == ord('q'):  # Press 'q' to exit
+            break
+        continue
+
+    # Area Filtering
     contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     detected_objects = []
 
     for contour in contours:
         if cv2.contourArea(contour) < 150:
-            continue  # Küçük alanları atla
+            continue  # Skip small areas
 
-        # Böceklerin merkezini bul
+        # Find the center of the insects
         M = cv2.moments(contour)
         if M["m00"] != 0:
             cX = int(M["m10"] / M["m00"])
             cY = int(M["m01"] / M["m00"])
 
-            # Uzaklığı hesapla (Öklid uzaklığı)
-            uzaklik = np.sqrt((cX - kimyasal_merkez[0])**2 + (cY - kimyasal_merkez[1])**2)
+            # Calculate the distance (Euclidean distance)
+            distance = np.sqrt((cX - chemical_center[0])**2 + (cY - chemical_center[1])**2)
 
-            detected_objects.append((cX, cY, uzaklik))
+            detected_objects.append((cX, cY, distance))
 
-    # Nesne eşleme ve kimliklendirme
-    for (cX, cY, uzaklik) in detected_objects:
+    # Object matching and identification
+    for (cX, cY, distance) in detected_objects:
         object_id = next_id
         next_id += 1
         for oid, data in object_data.items():
@@ -108,105 +118,94 @@ while True:
         if object_id not in object_data:
             object_data[object_id] = []
             object_tracks[object_id] = deque(maxlen=20)
-            last_recorded_times[object_id] = None  # Yeni böcek için son kayıt zamanı None olarak başlat
+            last_recorded_times[object_id] = None  # Initialize last recorded time as None for new insects
 
         current_time = datetime.datetime.now()
-        if last_recorded_times[object_id] is None or (current_time - last_recorded_times[object_id]).total_seconds() >= 1:  # Saniyede bir kayıt kontrolü
+        if last_recorded_times[object_id] is None or (current_time - last_recorded_times[object_id]).total_seconds() >= 1:  # Check for recording every second
             current_time_str = current_time.strftime("%H:%M:%S")
-            object_data[object_id].append((current_time_str, cX, cY, uzaklik))
+            object_data[object_id].append((current_time_str, cX, cY, distance))
             object_tracks[object_id].append((cX, cY))
-            last_recorded_times[object_id] = current_time  # Son kayıt zamanını güncelle
+            last_recorded_times[object_id] = current_time  # Update the last recorded time
 
-        # Dikdörtgen içine alma ve uzaklığı yazdırma
+        # Draw rectangle and display distance
         (x, y, w, h) = cv2.boundingRect(np.array([[cX, cY]]))
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(frame, f"{uzaklik:.2f}", (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(frame, f"{distance:.2f}", (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         cv2.putText(frame, f"ID: {object_id}", (cX, cY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-    # Kimyasalın yerini işaretle
-    cv2.circle(frame, kimyasal_merkez, 5, (0, 0, 0), -1)
+    # Mark the position of the chemical
+    cv2.circle(frame, chemical_center, 5, (0, 0, 0), -1)
 
-    #cv2.imshow('Frame', frame)
-    #cv2.imshow('FG Mask', fgmask)
-
-
-
-    # Yoğunluk haritasını güncelle
+    # Update the heatmap
     for oid, track in object_tracks.items():
         for (x, y) in track:
             heatmap[y, x] += 1
 
-    # Yoğunluk haritasını bulanıklaştır ve normalize et
+    # Blur and normalize the heatmap
     heatmap_blurred = gaussian_filter(heatmap, sigma=10)
     heatmap_normalized = (heatmap_blurred - heatmap_blurred.min()) / (heatmap_blurred.max() - heatmap_blurred.min())
 
-    # Yoğunluk haritasını renklendir (3 kanallı)
+    # Colorize the heatmap (3 channels)
     heatmap_colored = (plt.cm.jet(heatmap_normalized)[:, :, :3] * 255).astype(np.uint8)
 
-    # Boyutları eşitle
+    # Match dimensions
     heatmap_colored = cv2.resize(heatmap_colored, (frame.shape[1], frame.shape[0]))
 
-    # Kimyasalın yerini heatmap_colored üzerinde işaretle (siyah)
-    cv2.circle(heatmap_colored, kimyasal_merkez, 5, (0, 0, 0), -1)  # Siyah renk (0, 0, 0)
+    # Mark the position of the chemical on the heatmap_colored (black)
+    cv2.circle(heatmap_colored, chemical_center, 5, (0, 0, 0), -1)  # Black color (0, 0, 0)
 
-    # Yoğunluk haritasını videoya ekle (isteğe bağlı)
+    # Overlay the heatmap on the video (optional)
     heatmap_overlay = cv2.addWeighted(frame, 0.7, heatmap_colored, 0.3, 0)
-    cv2.imshow('Yogunluk Haritasi', heatmap_overlay)
+    cv2.imshow('Heatmap', heatmap_overlay)
 
-    # Kayıt zamanını kontrol et
-    simdiki_zaman = time.time()
-    if simdiki_zaman - son_kayit_zamani >= kayit_araligi:
-        # Her iki görüntüyü de aynı anda kaydet
-        dosya_adi_overlay = os.path.join(heatmap_overlay_klasoru, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_heatmap_overlay.png')
-        dosya_adi_colored = os.path.join(kayit_klasoru, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png')
-        cv2.imwrite(dosya_adi_overlay, heatmap_overlay)
-        cv2.imwrite(dosya_adi_colored, heatmap_colored)
-        son_kayit_zamani = simdiki_zaman
+    # Check if any objects were detected
+    if detected_objects:
+        current_time = time.time()
+        # If it's been at least 3 seconds since the last save, save the frame
+        if current_time - last_record_time >= record_interval_with_detection:
+            # Save both images at the same time
+            overlay_filename = os.path.join(heatmap_overlay_folder, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_heatmap_overlay.png')
+            colored_filename = os.path.join(record_folder, f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.png')
+            cv2.imwrite(overlay_filename, heatmap_overlay)
+            cv2.imwrite(colored_filename, heatmap_colored)
+            last_record_time = current_time
 
-    # Grafiği güncelle
+    # Update the plot
     ax.clear()
     for oid, data in object_data.items():
         times = [datetime.datetime.strptime(d[0], "%H:%M:%S") for d in data]
         distances = [d[3] for d in data]
         ax.plot(times, distances, marker='o', linestyle='-', color=colors[oid % 100], label=f'ID {oid}')
-    ax.set_title('Böceklerin Kimyasal Merkezine Uzaklığına Göre Zaman Grafiği')
-    ax.set_xlabel('Zaman')
-    ax.set_ylabel('Uzaklık (piksel)')
+    ax.set_title('Insect Distance to Chemical Center Over Time')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Distance (pixels)')
     ax.legend()
     ax.grid(True)
     ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M:%S'))
     plt.gcf().autofmt_xdate()
     plt.pause(0.001)
 
-    # Yoğunluk haritasını ayrı pencerede göster
-    #cv2.imshow('Yoğunluk Haritası', heatmap_colored)
 
-    if cv2.waitKey(30) == ord('q'):  # 'q' tuşuna basarak çıkış
+    if cv2.waitKey(30) == ord('q'):  # Press 'q' to exit
         break
 
 cap.release()
 cv2.destroyAllWindows()
 
-# Grafiği kaydet
-kayit_zamani = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-grafik_dosya_adi = f'bocek_uzaklik_grafigi_{kayit_zamani}.png'
-plt.savefig(grafik_dosya_adi)
+# Save the plot
+save_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+plot_filename = f'insect_distance_plot_{save_time}.png'
+plt.savefig(plot_filename)
 
-# Matplotlib'in interaktif modunu kapat
+# Disable interactive mode for Matplotlib
 plt.ioff()
 plt.show()
 
-"""
-# Yoğunluk haritasını kaydet
-cv2.imwrite('yogunluk_haritasi.png', heatmap_overlay)
-cv2.imwrite('yogunluk_haritasi2.png', heatmap_colored)
-"""
-
-# Verileri Excel dosyasına kaydet
+# Save the data to an Excel file
 all_data = []
 for oid, data in object_data.items():
     for entry in data:
-        all_data.append([oid, entry[0], entry[3]])  # Sadece ID, zaman ve uzaklık
+        all_data.append([oid, entry[0], entry[3]])  # Only ID, time, and distance
 
 df = pd.DataFrame(all_data, columns=['Object ID', 'Time', 'Distance'])
-df.to_excel('bocek_izleme_verileri.xlsx', index=False)
+df.to_excel('insect_tracking_data.xlsx', index=False)
